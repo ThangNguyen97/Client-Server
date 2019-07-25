@@ -296,19 +296,22 @@ int main(){
 						char ip[50], command[50], phu[50];
 						recv(newSocket,ip,50,0);
 						printf("%s\n",ip);
-						if(!true_ip(ip)){
-							send(newSocket, "Wrong IP!", 50, 0);
-						continue;
-						}	
+				//		if(!true_ip(ip)){
+				//			send(newSocket, "Wrong IP!", 50, 0);
+				//		continue;
+				//		}	
 						strcpy(command, "sudo iptables -A INPUT -s ");
 						strcpy(phu, " -j DROP");
 						strcat(command,ip);
 						strcat(command,phu);
                                 		system(command);
 						add_black_ip(ip_list, ip);
-						send(newSocket, ip_list.size_black, 10, 0);
+						char str[5];
+						sprintf(str, "%d",ip_list.size_black);
+					//	itoa(ip_list.size_black,str,10);
+						send(newSocket,str, 10, 0);
 						for(int i=0; i < ip_list.size_black; i++){
-							send(newSocket, mac_list.black[i], 50, 0);
+							send(newSocket, ip_list.black[i], 50, 0);
 						}
 						send(newSocket, "Block IP Success!", 50, 0); 
 					}
