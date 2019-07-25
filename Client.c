@@ -130,13 +130,13 @@ int main(){
 				scanf("%s", ip);
 				send(clientSocket, ip, 1024, 0);
 				recv(clientSocket, status, 50, 0);
-				if(strcmp(status, "Wrong IP") == 0){
-					printf("%s\n", status);
-					continue;
-				}
+			//	if(strcmp(status, "Wrong IP") == 0){
+			//		printf("%s\n", status);
+			//		continue;
+			//	}
 				char size[5];
 				recv(clientSocket, size, 10, 0);
-				printf("%d\n",atoi(size));
+				printf("%d\n", atoi(size));
 				printf("Black list IP:\n");
 				for(int i = 0; i < atoi(size); i++){
 					recv(clientSocket, ip, 50, 0);
