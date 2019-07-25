@@ -37,6 +37,18 @@ void show_rule(struct lan _lan){
 	printf("Source MAC:\t%s\n", _lan.srcmac);
 	printf("Mac mask:\t%s\n", _lan.mask);
 }
+
+int true_ip(char ip[]){
+	char *p;
+	int tmp;
+	p = strtok(ip, ".");
+	while(p!=NULL){
+		tmp = atoi(p);
+		if(tmp < 0 || tmp >255) return 0;
+		p = strtok(NULL, ".");
+	}
+	return 1;
+}
 int main(){
 
 	int clientSocket, ret;
@@ -56,7 +68,7 @@ int main(){
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_port = htons(PORT);
 	serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	char username[]="Dasan";
+/*	char username[]="Dasan";
 	char password[]="123456";
 	char user[50], pass[50];
 	printf("Username: ");
@@ -70,7 +82,7 @@ int main(){
 	gets(user);
 	printf("Password: ");
 	gets(pass);
-	}	
+	}*/	
 	ret = connect(clientSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 	if(ret < 0){
 		printf("[-]Error in connection.\n");
@@ -108,7 +120,33 @@ int main(){
 			}
 			show(list_control);
 			printf("Client set: %s\n", status);
+		
 		}
+		else if(strcmp(buffer, "block") == 0){
+			scanf("%s", buffer);
+			send(clientSocket, buffer, 1024, 0);
+			if(strcmp(buffer, "ip") == 0){
+				char ip[50], status[50];
+				scanf("%s", ip);
+				send(clientSocket, ip, 1024, 0);
+				recv(clientSocket, status, 50, 0);
+				if(strcmp(status, "Wrong IP") == 0){
+					printf("%s\n", status);
+					continue;
+				}
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n",atoi(size));
+				printf("Black list IP:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, ip, 50, 0);
+					printf("%s\n", ip);
+				}
+				recv(clientSocket, status, 50, 0);
+				printf("%s\n", status);
+			}
+		}
+		
 		else if(strcmp(buffer, "update") == 0){
 			scanf("%s", &buffer[0]);
 			send(clientSocket, buffer, 50, 0);
