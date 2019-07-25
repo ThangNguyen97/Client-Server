@@ -1,4 +1,4 @@
-w#include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -18,6 +18,15 @@ struct lan{
 	char interface[50], rule[50], proto[50], srcip[50], srcmac[50], mask[50];
 };
 
+struct list_ip{
+	int size_white, size_black;
+	char black[50][50],  white[50][50];
+};
+
+struct list_mac{
+	int size_white, size_black;
+	char black[50][50], white[50][50];
+};
 void init(struct control list_control[], struct lan list_lan[]){
 	char interface[50] = "eth";
 	for (int i = 1; i < NUM_INTERFACE; ++i){
@@ -124,6 +133,81 @@ void delete_rule(int Socket, struct lan list_lan[], struct control list_control[
 struct control list_control[3];
 struct lan list_lan[5];
 
+void add_black_ip(struct list_ip list, char ip[50]){
+	for(int i = 0; i < list.size_black; i++){
+		if(strcmp(ip, list.black[i]) == 0) return;
+	}
+	for(int i = 0; i < list.size_white; i++){
+		if(strcmp(ip, list.white[i]) != 0) continue;
+		for( int j = i + 1; j < list.size_white; j++){
+			strcpy(list.white[j-1], list.white[j]);
+		}
+		list.size_white--;
+	}
+	strcpy(list.black[list.size_black], ip);
+
+	list.size_black++;
+
+}
+void add_white_ip(struct list_ip list, char ip[50]){
+	for(int i = 0; i < list.size_white; i++){
+		if(strcmp(ip, list.white[i]) == 0) return;
+	}
+	for(int i = 0; i < list.size_black; i++){
+		if(strcmp(ip, list.black[i]) != 0) continue;
+		for( int j = i + 1; j < list.size_black; j++){
+			strcpy(list.black[j-1], list.black[j]);
+		}
+		list.size_black--;
+	}
+	strcpy(list.white[list.size_white], ip);
+	list.size_white++;
+}
+void add_black_mac(struct list_mac list, char mac[50]){
+	for(int i = 0; i < list.size_black; i++){
+		if(strcmp(mac, list.black[i]) == 0) return;
+	}
+	for(int i = 0; i < list.size_white; i++){
+		if(strcmp(mac, list.white[i]) != 0) continue;
+		for( int j = i + 1; j < list.size_white; j++){
+			strcpy(list.white[j-1], list.white[j]);
+		}
+		list.size_white--;
+	}
+	strcpy(list.black[list.size_black], mac);
+	list.size_black++;
+}
+
+void add_white_mac(struct list_mac list, char mac[50]){
+	for(int i = 0; i < list.size_white; i++){
+		if(strcmp(mac, list.white[i]) == 0) return;
+	}
+	for(int i = 0; i < list.size_black; i++){
+		if(strcmp(mac, list.black[i]) != 0) continue;
+		for( int j = i + 1; j < list.size_black; j++){
+			strcpy(list.black[j-1], list.black[j]);
+		}
+		list.size_black--;
+	}
+	strcpy(list.white[list.size_white], mac);
+	list.size_white++;
+}
+int true_ip(char ip[]){
+        char *p;
+        int tmp;
+        p = strtok(ip, ".");
+        while(p!=NULL){
+                tmp = atoi(p);
+                if(tmp < 0 || tmp >255) return 0;
+                p = strtok(NULL, ".");
+        }
+        return 1;
+}
+
+
+struct list_ip ip_list;
+struct list_mac mac_list;
+
 int main(){
 	init(list_control, list_lan);
 
@@ -207,17 +291,74 @@ int main(){
 }*/
 				
 				else if(strcmp(buffer, "block")==0){
-				if(strcmp(buffer,"ip")==0){
-				char ip[50], command[50], phu[50];
-				recv(newSocket,ip,50,0);
-				strcpy(command, "sudo iptables -A INPUT -s");
-				strcpy(phu, "-j DROP");
-				strcat(command,ip);
-				strcat(command,phu);
-                                system(command);
-				send(newSocket,"Success!",50,0);
-				}
+					recv(newSocket, buffer, 1024, 0);
+					if(strcmp(buffer,"ip")==0){
+						char ip[50], command[50], phu[50];
+						recv(newSocket,ip,50,0);
+						printf("%s\n",ip);
+						if(!true_ip(ip)){
+							send(newSocket, "Wrong IP!", 50, 0);
+						continue;
+						}	
+						strcpy(command, "sudo iptables -A INPUT -s ");
+						strcpy(phu, " -j DROP");
+						strcat(command,ip);
+						strcat(command,phu);
+                                		system(command);
+						add_black_ip(ip_list, ip);
+						send(newSocket, ip_list.size_black, 10, 0);
+						for(int i=0; i < ip_list.size_black; i++){
+							send(newSocket, mac_list.black[i], 50, 0);
+						}
+						send(newSocket, "Block IP Success!", 50, 0); 
+					}
+					else if(strcmp(buffer,"mac")==0){
+						char mac[50], command[50], phu[50];
+						recv(newSocket,mac,50,0);
+						strcpy(command, "sudo iptables -A INPUT -s");
+						strcpy(phu, "-j DROP");
+						strcat(command,mac);
+						strcat(command,phu);
+                                		system(command);
+						add_black_mac(mac_list, mac);
+						for(int i=0; i < mac_list.size_black; i++){
+							send(newSocket, mac_list.black[i], 50, 0);
+						}
+						send(newSocket, "Block MAC Success!", 50, 0); 
+					}
                                 }
+				else if(strcmp(buffer, "allow")==0){
+					if(strcmp(buffer,"ip")==0){
+						char ip[50], command[50], phu[50];
+						recv(newSocket,ip,50,0);
+						strcpy(command, "sudo iptables -A INPUT -s");
+						strcpy(phu, "-j DROP");
+						strcat(command,ip);
+						strcat(command,phu);
+                                		system(command);
+						add_white_ip(ip_list, ip);
+						for(int i=0; i < ip_list.size_white; i++){
+							send(newSocket, mac_list.white[i], 50, 0);
+						}
+						send(newSocket, "Allow IP Success!", 50, 0); 
+					}
+					else if(strcmp(buffer,"mac")==0){
+						char mac[50], command[50], phu[50];
+						recv(newSocket,mac,50,0);
+						strcpy(command, "sudo iptables -A INPUT -s");
+						strcpy(phu, "-j DROP");
+						strcat(command,mac);
+						strcat(command,phu);
+                                		system(command);
+						add_white_mac(mac_list, mac);
+						for(int i=0; i < mac_list.size_white; i++){
+							send(newSocket, mac_list.white[i], 50, 0);
+						}
+						send(newSocket, "Allow MAC Success!", 50, 0); 
+					}
+                                }
+
+
 				else if(strcmp(buffer, "update") == 0){
 					update_rule(newSocket, list_lan, list_control);}
 				else if(strcmp(buffer, "delete") == 0){
