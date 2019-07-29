@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 
 #define PORT 4444
-const int NUM_INTERFACE = 5;
+const int NUM_INTERFACE = 2;
 
 struct control{
 	char interface[50], alias[50], mode[50];
@@ -88,7 +88,30 @@ int main(){
 		printf("[-]Error in connection.\n");
 		exit(1);
 	}
+
 	printf("[+]Connected to Server.\n");
+/*	printf("LOGIN TO SERVER\n");
+	printf("User name: \t");
+	scanf("%s", &buffer[0]);
+	send(clientSocket,buffer,1024,0);
+	printf("Password: \t");
+	scanf("%s", &buffer[0]);
+	send(clientSocket,buffer,1024,0);
+	char sta[50];
+	recv(clientSocket,sta,50,0);
+	while(strcmp(sta,"Wellcome Admin!")!=0)
+	{
+	char sta[50];
+	printf("LOGIN TO SERVER\n");
+	printf("User name: \t");
+	scanf("%s", &buffer[0]);
+	send(clientSocket,buffer,1024,0);
+	printf("Password: \t");
+	scanf("%s", &buffer[0]);
+	send(clientSocket,buffer,1024,0);
+	recv(clientSocket,sta,50,0);
+	}*/
+
 	for(int i = 1; i < NUM_INTERFACE; i++){
 		recv(clientSocket, list_control[i].interface, 50, 0);
 		recv(clientSocket, list_control[i].alias, 50, 0);
@@ -99,7 +122,6 @@ int main(){
 		printf("Client: \t");
 		scanf("%s", &buffer[0]);
 		send(clientSocket, buffer, 1024, 0);
-
 		if(strcmp(buffer, ":exit") == 0){
 			close(clientSocket);
 			printf("[-]Disconnected from server.\n");
@@ -128,12 +150,12 @@ int main(){
 			if(strcmp(buffer, "ip") == 0){
 				char ip[50], status[50];
 				scanf("%s", ip);
-				send(clientSocket, ip, 1024, 0);
+				send(clientSocket, ip, 50, 0);
 				recv(clientSocket, status, 50, 0);
-			//	if(strcmp(status, "Wrong IP") == 0){
-			//		printf("%s\n", status);
-			//		continue;
-			//	}
+				if(strcmp(status, "Wrong IP!") == 0){
+					printf("%s\n", status);
+					continue;
+				}
 				char size[5];
 				recv(clientSocket, size, 10, 0);
 				printf("%d\n", atoi(size));
@@ -142,11 +164,110 @@ int main(){
 					recv(clientSocket, ip, 50, 0);
 					printf("%s\n", ip);
 				}
+				printf("%s\n", status);
+			
+			}
+			if(strcmp(buffer, "rangeIP") == 0){
+				char ip[50], status[50];
+				scanf("%s", ip);
+				send(clientSocket, ip, 50, 0);
 				recv(clientSocket, status, 50, 0);
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n", atoi(size));
+				printf("BlackList IP:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, ip, 50, 0);
+					printf("%s\n", ip);
+				}
 				printf("%s\n", status);
 			}
+			if(strcmp(buffer, "all")==0){
+				char status[50];
+				recv(clientSocket, status,50,0);
+				printf("%s\n",status);
+			}
+			if(strcmp(buffer, "mac") == 0){
+				char mac[50], status[50];
+				scanf("%s", mac);
+				send(clientSocket, mac, 50, 0);
+				recv(clientSocket, status, 50, 0);
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n", atoi(size));
+				printf("BlackList MAC:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, mac, 50, 0);
+					printf("%s\n", mac);
+				}
+				printf("%s\n", status);
+			}
+
 		}
-		
+		else if(strcmp(buffer, "allow") == 0){
+			scanf("%s", buffer);
+			send(clientSocket, buffer, 1024, 0);
+			if(strcmp(buffer, "ip") == 0){
+				char ip[50], status[50];
+				scanf("%s", ip);
+				send(clientSocket, ip, 50, 0);
+				recv(clientSocket, status, 50, 0);
+				if(strcmp(status, "Wrong IP!") == 0){
+					printf("%s\n", status);
+					continue;
+				}
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n", atoi(size));
+				printf("WhiteList IP:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, ip, 50, 0);
+					printf("%s\n", ip);
+				}
+				printf("%s\n", status);
+			}
+			if(strcmp(buffer, "rangeIP") == 0){
+				char ip[50], status[50];
+				scanf("%s", ip);
+				send(clientSocket, ip, 50, 0);
+				recv(clientSocket, status, 50, 0);
+				if(strcmp(status, "Wrong IP!") == 0){
+					printf("%s\n", status);
+					continue;
+				}
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n", atoi(size));
+				printf("WhiteList IP:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, ip, 50, 0);
+					printf("%s\n", ip);
+				}
+				printf("%s\n", status);
+			}
+			if(strcmp(buffer, "all")==0){
+				char status[50];
+				recv(clientSocket, status,50,0);
+				printf("%s\n",status);
+			}
+			if(strcmp(buffer, "mac") == 0){
+				char mac[50], status[50];
+				scanf("%s", mac);
+				send(clientSocket, mac, 50, 0);
+				recv(clientSocket, status, 50, 0);
+				char size[5];
+				recv(clientSocket, size, 10, 0);
+				printf("%d\n", atoi(size));
+				printf("WhiteList MAC:\n");
+				for(int i = 0; i < atoi(size); i++){
+					recv(clientSocket, mac, 50, 0);
+					printf("%s\n", mac);
+				}
+				printf("%s\n", status);
+			}
+
+		}
+
 		else if(strcmp(buffer, "update") == 0){
 			scanf("%s", &buffer[0]);
 			send(clientSocket, buffer, 50, 0);
