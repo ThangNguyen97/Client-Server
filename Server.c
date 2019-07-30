@@ -113,10 +113,6 @@ void update_rule(int Socket, struct lan list_lan[], struct control list_control[
 	recv(Socket, list_lan[id].mask, 50, 0);
 	printf("Update Success!\n");
 	send_rule(Socket, list_lan[id]);
-/*	if(strcmp(list_lan[id].srcip, inet_ntoa(newAddr.sin_addr)) ==0)
-{
-	newSocket < 0;
-}*/
 }
 void delete_rule(int Socket, struct lan list_lan[], struct control list_control[]){
 	char interface[50];
@@ -258,17 +254,21 @@ int main(){
 
 		if((childpid = fork()) == 0){
 			close(sockfd);
-		/*	send_control(newSocket, list_control);
-			recv(newSocket,buffer,1024,0);
-			while(strcmp(buffer,"Dasan")!=0){
-				recv(newSocket,buffer,1024,0);
-				send(newSocket,".",50,0);
+	                char user[50], pass[50];
+			memset(user, '\0',50);
+			memset(pass, '\0',50);
+
+	   		recv(newSocket,user,50,0);
+                        recv(newSocket,pass,50,0);
+			printf("%s\n",user);
+			printf("%s\n",pass);
+			while(strcmp(user,"Dasan")!=0||strcmp(pass,"123456")!=0){
+			    send(newSocket,"Login Again!",50,0);
+            	            recv(newSocket,user,50,0);
+               		    recv(newSocket,pass,50,0);
 				}
-			recv(newSocket,buffer,1024,0);
-			if(strcmp(buffer,"123456")==0){
-				printf("Admin logged in to Server\n");
-				send(newSocket,"Wellcome Admin!\n",50,0);
-					}*/
+			printf("Admin logged in to Server\n");
+                        send(newSocket,"Wellcome Admin!",50,0);
 			send_control(newSocket, list_control);
 			while(1){
 				recv(newSocket, buffer, 1024, 0);
@@ -304,7 +304,7 @@ int main(){
                                 		system(command);
 						add_black_ip(ip);
 						char str[5];
-						sprintf(str, "%d",ip_list.size_black);
+						sprintf(str, "%d",ip_list.size_black);
 						send(newSocket,str, 10, 0);
 						for(int i=0; i < ip_list.size_black; i++){
 							send(newSocket, ip_list.black[i], 50, 0);
