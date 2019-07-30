@@ -90,28 +90,29 @@ int main(){
 	}
 
 	printf("[+]Connected to Server.\n");
-/*	printf("LOGIN TO SERVER\n");
+	printf("LOGIN TO SERVER\n");
 	printf("User name: \t");
 	scanf("%s", &buffer[0]);
-	send(clientSocket,buffer,1024,0);
+	send(clientSocket,buffer,50,0);
 	printf("Password: \t");
 	scanf("%s", &buffer[0]);
-	send(clientSocket,buffer,1024,0);
+	send(clientSocket,buffer,50,0);
 	char sta[50];
 	recv(clientSocket,sta,50,0);
 	while(strcmp(sta,"Wellcome Admin!")!=0)
 	{
-	char sta[50];
+    memset(buffer, '\0', 50);
+
 	printf("LOGIN TO SERVER\n");
 	printf("User name: \t");
 	scanf("%s", &buffer[0]);
-	send(clientSocket,buffer,1024,0);
+	send(clientSocket,buffer,50,0);
 	printf("Password: \t");
 	scanf("%s", &buffer[0]);
-	send(clientSocket,buffer,1024,0);
+	send(clientSocket,buffer,50,0);
 	recv(clientSocket,sta,50,0);
-	}*/
-
+	}
+	printf("=== WELLCOME ADMIN===\n");
 	for(int i = 1; i < NUM_INTERFACE; i++){
 		recv(clientSocket, list_control[i].interface, 50, 0);
 		recv(clientSocket, list_control[i].alias, 50, 0);
