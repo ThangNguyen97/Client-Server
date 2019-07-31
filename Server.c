@@ -6,8 +6,60 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <signal.h>
 
 #define PORT 4444
+
+volatile int admin_login = 0;
+pid_t childpid;
+int number_child = 0;
+int arr_child[100];
+
+void send_sig_to_child_oldest()
+{
+		
+	if( number_child > 0)
+	{
+		
+		printf("in send sig oldest %d\n", number_child );
+		kill(arr_child[number_child-1], SIGUSR2);
+		number_child--;
+		admin_login = 1;
+	}
+	
+}
+void add_child(int cpid)
+{
+	arr_child[number_child] = cpid;	
+	number_child ++;
+}
+void signal_handler(int signo)
+{
+	// child send signal to parrent 
+	if(signo == SIGUSR1)
+	{
+		if( 0 == admin_login )	
+		{
+			send_sig_to_child_oldest();
+		}
+	}
+	// parrent send signal to child
+	else if(signo == SIGUSR2)
+	{
+		//child
+		admin_login = 0;	
+	}
+	// child
+	else if(signo == SIGCHLD)
+	{
+		puts("jump to sig child");
+		admin_login = 0;	
+	}
+}
+int configable() 
+{
+	return (0 == admin_login);
+}
 const int NUM_INTERFACE = 2;
 
 struct control{
@@ -216,7 +268,10 @@ int main(){
 	socklen_t addr_size;
 
 	char buffer[1024];
-	pid_t childpid;
+
+	signal(SIGUSR1, signal_handler);
+	signal(SIGUSR2, signal_handler);
+	signal(SIGCHLD, signal_handler);
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0){
@@ -250,15 +305,22 @@ int main(){
 		if(newSocket < 0){
 			exit(0);
 		}
-		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
 
-		if((childpid = fork()) == 0){
+		printf("Connection accepted from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+		
+		childpid = fork();
+		if ( childpid > 0) 
+		{
+			add_child(childpid);
+		}
+		else if( childpid== 0){
+			admin_login = 1;
 			close(sockfd);
 	                char user[50], pass[50];
 			memset(user, '\0',50);
 			memset(pass, '\0',50);
 
-	   		recv(newSocket,user,50,0);
+	   	recv(newSocket,user,50,0);
                         recv(newSocket,pass,50,0);
 			printf("%s\n",user);
 			printf("%s\n",pass);
@@ -267,6 +329,18 @@ int main(){
             	            recv(newSocket,user,50,0);
                		    recv(newSocket,pass,50,0);
 				}
+			relogin:printf("admin_login = %d\n", admin_login);
+			        kill(getppid(), SIGUSR1);
+				usleep(100000);
+				if(configable())
+					puts("ok");
+				else 
+				{
+					puts("admin busy");
+					goto relogin;
+				}
+
+				
 			printf("Admin logged in to Server\n");
                         send(newSocket,"Wellcome Admin!",50,0);
 			send_control(newSocket, list_control);
@@ -274,6 +348,9 @@ int main(){
 				recv(newSocket, buffer, 1024, 0);
 				if(strcmp(buffer, ":exit") == 0){
 					printf("Disconnected from %s:%d\n", inet_ntoa(newAddr.sin_addr), ntohs(newAddr.sin_port));
+					kill(getppid(), SIGCHLD);
+					sleep(1);
+					return 0;	
 					break;
 				}
 				else if(strcmp(buffer, "set") == 0){
